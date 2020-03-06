@@ -83,7 +83,7 @@ gogamza@192.168.1.1:~/KoSpacing/data$ bzcat UCorpus_spacing_train.txt.bz2 | head
 
 ### Requirement
 
-- mxnet (>= 1.0)
+- mxnet (>= 1.6.0)
 - tqdm (>= 4.19.5)
 - pandas (>= 0.22.0)
 - gensim (>= 3.8.1)
