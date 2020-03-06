@@ -1,4 +1,3 @@
-
 # coding=utf-8
 # Copyright 2020 Heewon Jeon. All rights reserved.
 #
@@ -94,6 +93,10 @@ parser.add_argument('--eval_batch_size',
                     default=100,
                     help='test batch size')
 
+parser.add_argument('--n_workers',
+                    type=int,
+                    default=10,
+                    help='number of dataloader workers')
 
 opt = parser.parse_args()
 
@@ -208,7 +211,8 @@ def get_generator(x, y, batch_size):
     tr_set = gluon.data.ArrayDataset(x, y.astype('float32'))
     tr_data_iterator = gluon.data.DataLoader(tr_set,
                                              batch_size=batch_size,
-                                             shuffle=True)
+                                             shuffle=True,
+                                             num_workers=opt.n_workers)
     return (tr_data_iterator)
 
 
@@ -221,6 +225,7 @@ def model_init(n_hidden, vocab_size, embed_dim, max_seq_length, ctx):
                                max_seq_length=max_seq_length)
     model.collect_params().initialize(mx.init.Xavier(), ctx=ctx)
     model.embedding.weight.set_data(weights)
+    model.hybridize()
     # 임베딩 영역 가중치 고정
     model.embedding.collect_params().setattr('grad_req', 'null')
     trainer = gluon.Trainer(model.collect_params(), 'rmsprop', kvstore='local')
@@ -310,7 +315,7 @@ def train(epochs,
               (e, np.mean(train_loss), test_acc, valid_acc))
         tot_test_acc.append(test_acc)
         tot_train_loss.append(np.mean(train_loss))
-        model.save_params("{}_{}.params".format(mdl_desc, e))
+        model.save_parameters("{}_{}.params".format(mdl_desc, e))
     return (tot_test_acc, tot_train_loss)
 
 
@@ -404,7 +409,8 @@ if opt.train:
         'data/UCorpus_spacing_train.txt.bz2',
         train_ratio=0.95,
         sampling=opt.train_samp_ratio,
-        make_lag_set=True, batch_size=opt.batch_size)
+        make_lag_set=True,
+        batch_size=opt.batch_size)
 
     valid_generator = make_input_data('data/UCorpus_spacing_test.txt.bz2',
                                       sampling=1,
@@ -507,7 +513,7 @@ if not opt.train and opt.eval:
                                embed_dim=embed_dim,
                                max_seq_length=opt.max_seq_len)
     model.load_parameters(opt.model_params,
-                      ctx=ctx[0] if isinstance(ctx, list) else mx.gpu(0))
+                          ctx=ctx[0] if isinstance(ctx, list) else mx.gpu(0))
     valid_generator = make_input_data('data/UCorpus_spacing_test.txt.bz2',
                                       sampling=1,
                                       train_ratio=1,
