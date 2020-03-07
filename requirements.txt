@@ -1,4 +1,4 @@
-mxnet >= 1.6.0
+mxnet-mkl >= 1.6.0 # mxnet-cu101mkl >= 1.6.0 
 tqdm >= 4.19.5
 pandas >= 0.22.0
 gensim >= 3.8.1

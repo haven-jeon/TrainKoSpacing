@@ -58,11 +58,11 @@ We used four evaluation measures: character-unit precision ($P_{char}$), word-un
 ### Installation
 
 - For training, a GPU is strongly recommended for speed. CPU is supported but training could be extremely slow.
-- Support only above Python 3.6.
+- Support only above Python 3.7.
 
 ### Dependencies
 
-```
+```bash
 pip install -r requirements.txt
 ```
 
@@ -83,20 +83,23 @@ gogamza@192.168.1.1:~/KoSpacing/data$ bzcat UCorpus_spacing_train.txt.bz2 | head
 
 ### Requirement
 
-- mxnet (>= 1.6.0)
+- Python (>= 3.7)
+- MXNet (>= 1.6.0)
 - tqdm (>= 4.19.5)
-- pandas (>= 0.22.0)
-- gensim (>= 3.8.1)
+- Pandas (>= 0.22.0)
+- Gensim (>= 3.8.1)
+
+For MXNet, it needs to install right version regarding training envirement(mxnet-cu90, mxnet-cu101,..).
 
 ### Training
 
-```{python}
-python train.py --train --train-samp-ratio 1.0 --num-epoch 20  
+```python
+python train.py --train --train-samp-ratio 1.0 --num-epoch 20 --train_data data/UCorpus_spacing_train.txt.bz2 --test_data data/UCorpus_spacing_test.txt.bz2
 ```
 
 ### Evaluation
 
-```{python}
+```python
 python train.py --model-params model/kospacing.params
 sent > 중국은2018년평창동계올림픽의반환점에이르기까지아직노골드행진이다.
 중국은2018년평창동계올림픽의반환점에이르기까지아직노골드행진이다.

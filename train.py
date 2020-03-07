@@ -18,6 +18,7 @@ import bz2
 import os
 import re
 import time
+from functools import lru_cache
 
 import mxnet as mx
 import mxnet.autograd as autograd
@@ -35,50 +36,59 @@ parser.add_argument('--num-epoch',
                     type=int,
                     default=5,
                     help='number of iterations to train (default: 5)')
+
 parser.add_argument('--n-hidden',
                     type=int,
                     default=200,
                     help='GRU hidden size (default: 200)')
+
 parser.add_argument('--max-seq-len',
                     type=int,
                     default=200,
                     help='max sentence length on input (default: 200)')
+
 parser.add_argument('--num-gpus',
                     type=int,
                     default=1,
                     help='number of gpus (default: 1)')
+
 parser.add_argument('--vocab-file',
                     type=str,
                     default='model/w2idx.dic',
                     help='vocabarary file (default: model/w2idx.dic)')
+
 parser.add_argument(
-    '--embedding-file',
-    type=str,
-    default='model/kospacing_wv.np',
-    help='embedding matrix file (default: model/kospacing_wv.np)')
+                    '--embedding-file',
+                    type=str,
+                    default='model/kospacing_wv.np',
+                    help='embedding matrix file (default: model/kospacing_wv.np)')
+
 parser.add_argument('--train',
                     action='store_true',
                     default=False,
                     help='do trainig (default: False)')
-parser.add_argument(
-    '--model-file',
-    type=str,
-    default='kospacing_wv.mdl',
-    help='output object from Word2Vec() (default: kospacing_wv.mdl)')
+
+parser.add_argument('--model-file',
+                    type=str,
+                    default='kospacing_wv.mdl',
+                    help='output object from Word2Vec() (default: kospacing_wv.mdl)')
+
 parser.add_argument('--train-samp-ratio',
                     type=float,
                     default=0.50,
                     help='random train sample ration (default: 0.50)')
+
 parser.add_argument('--model-prefix',
                     type=str,
                     default='kospacing',
                     help='prefix of output model file (default: kospacing)')
+
 parser.add_argument('--model-params',
                     type=str,
                     default='kospacing_0.params',
                     help='model params file (default: kospacing_0.params)')
 
-parser.add_argument('--eval',
+parser.add_argument('--test',
                     action='store_true',
                     default=False,
                     help='eval train set (default: False)')
@@ -88,7 +98,7 @@ parser.add_argument('--batch_size',
                     default=100,
                     help='train batch size')
 
-parser.add_argument('--eval_batch_size',
+parser.add_argument('--test_batch_size',
                     type=int,
                     default=100,
                     help='test batch size')
@@ -97,6 +107,17 @@ parser.add_argument('--n_workers',
                     type=int,
                     default=10,
                     help='number of dataloader workers')
+
+parser.add_argument('--train_data',
+                    type=str,
+                    default='data/UCorpus_spacing_train.txt.bz2',
+                    help='bziped train data')
+
+parser.add_argument('--test_data',
+                    type=str,
+                    default='data/UCorpus_spacing_test.txt.bz2',
+                    help='bziped test data')
+
 
 opt = parser.parse_args()
 
@@ -336,7 +357,7 @@ def make_input_data(inputs,
                     make_lag_set=False,
                     batch_size=200):
     with bz2.open(inputs, 'rt') as f:
-        line_list = [i.strip() for i in f.readlines()]
+        line_list = [i.strip() for i in f.readlines() if i.strip() != '']
     print('complete loading train file!')
 
     # 아버지가 방에 들어가신다. -> '«아버지가^방에^들어가신다.»'
@@ -390,8 +411,8 @@ def make_input_data(inputs,
 
         # train generator
         train_generator = get_generator(x_train, y_train, batch_size)
-        test_generator = get_generator(x_test, y_test, 500)
-        return (train_generator, test_generator)
+        valid_generator = get_generator(x_test, y_test, 500)
+        return (train_generator, valid_generator)
     else:
         train_generator = get_generator(ngram_coding_seq, n_gram_y, batch_size)
         return (train_generator)
@@ -405,18 +426,18 @@ if opt.train:
     vocab_size = weights.shape[0]
     embed_dim = weights.shape[1]
 
-    train_generator, test_generator = make_input_data(
-        'data/UCorpus_spacing_train.txt.bz2',
+    train_generator, valid_generator = make_input_data(
+        opt.train_data,
         train_ratio=0.95,
         sampling=opt.train_samp_ratio,
         make_lag_set=True,
         batch_size=opt.batch_size)
 
-    valid_generator = make_input_data('data/UCorpus_spacing_test.txt.bz2',
+    test_generator = make_input_data(opt.test_data,
                                       sampling=1,
                                       train_ratio=1,
                                       make_lag_set=True,
-                                      batch_size=opt.eval_batch_size)
+                                      batch_size=opt.test_batch_size)
 
     model, loss, trainer = model_init(n_hidden=opt.n_hidden,
                                       vocab_size=vocab_size,
@@ -444,6 +465,7 @@ class pred_spacing:
         self.w2idx = w2idx
         self.pattern = re.compile(r'\s+')
 
+    @lru_cache(maxsize=None)
     def get_spaced_sent(self, raw_sent):
         raw_sent_ = "«" + raw_sent + "»"
         raw_sent_ = raw_sent_.replace(' ', '^')
@@ -476,7 +498,7 @@ class pred_spacing:
         return subs
 
 
-if not opt.train and not opt.eval:
+if not opt.train and not opt.test:
     # 사전 파일 로딩
     w2idx, idx2w = load_vocab(opt.vocab_file)
     # 임베딩 파일 로딩
@@ -499,7 +521,7 @@ if not opt.train and not opt.eval:
         spaced = predictor.get_spaced_sent(sent)
         print("spaced sent > {}".format(spaced))
 
-if not opt.train and opt.eval:
+if not opt.train and opt.test:
     print("calculate accuracy!")
     # 사전 파일 로딩
     w2idx, idx2w = load_vocab(opt.vocab_file)
