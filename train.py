@@ -15,20 +15,22 @@
 
 import argparse
 import bz2
-import re
 import logging
+import re
 import time
 from functools import lru_cache
+from timeit import default_timer as timer
 
+import gluonnlp as nlp
 import mxnet as mx
 import mxnet.autograd as autograd
 import numpy as np
 from mxnet import gluon
 from mxnet.gluon import nn, rnn
-import gluonnlp as nlp
 from tqdm import tqdm
 
-from utils.embedding_maker import load_embedding, load_vocab, encoding_and_padding
+from utils.embedding_maker import (encoding_and_padding, load_embedding,
+                                   load_vocab)
 
 logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
 logger = logging.getLogger()
@@ -671,8 +673,10 @@ if not opt.train and not opt.test:
     while 1:
         sent = input("sent > ")
         print(sent)
+        start = timer()
         spaced = predictor.get_spaced_sent(sent)
-        print("spaced sent > {}".format(spaced))
+        end = timer()
+        print("spaced sent[{:03.2f}sec/sent]  > {}".format(end - start, spaced))
 
 if not opt.train and opt.test:
     logger.info("calculate accuracy!")
