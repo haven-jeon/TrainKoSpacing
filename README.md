@@ -88,18 +88,19 @@ gogamza@192.168.1.1:~/KoSpacing/data$ bzcat UCorpus_spacing_train.txt.bz2 | head
 - tqdm (>= 4.19.5)
 - Pandas (>= 0.22.0)
 - Gensim (>= 3.8.1)
+- GluonNLP (>= 0.9.1)
 
 For MXNet, it needs to install right version regarding training envirement(mxnet-cu90, mxnet-cu101,..).
 
 ### Training
 
-```python
+```bash
 python train.py --train --train-samp-ratio 1.0 --num-epoch 20 --train_data data/UCorpus_spacing_train.txt.bz2 --test_data data/UCorpus_spacing_test.txt.bz2 --outputs train_log_to --model_type kospacing 
 ```
 
 ### Evaluation
 
-```python
+```bash
 python train.py --model-params model/kospacing.params --model_type kospacing
 sent > 중국은2018년평창동계올림픽의반환점에이르기까지아직노골드행진이다.
 중국은2018년평창동계올림픽의반환점에이르기까지아직노골드행진이다.
