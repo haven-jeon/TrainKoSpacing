@@ -104,7 +104,7 @@ python train.py --train --train-samp-ratio 1.0 --num-epoch 20 --train_data data/
 python train.py --model-params model/kospacing.params --model_type kospacing
 sent > 중국은2018년평창동계올림픽의반환점에이르기까지아직노골드행진이다.
 중국은2018년평창동계올림픽의반환점에이르기까지아직노골드행진이다.
-spaced sent > 중국은 2018년 평창동계올림픽의 반환점에 이르기까지 아직 노골드행진이다.
+spaced sent > 중국은 2018년 평창동계올림픽의 반환점에 이르기까지 아직 노골드 행진이다. 
 ```
 
 ## Citation

@@ -670,9 +670,9 @@ if not opt.train and not opt.test:
 
     while 1:
         sent = input("sent > ")
-        logger.info(sent)
+        print(sent)
         spaced = predictor.get_spaced_sent(sent)
-        logger.info("spaced sent > {}".format(spaced))
+        print("spaced sent > {}".format(spaced))
 
 if not opt.train and opt.test:
     logger.info("calculate accuracy!")
